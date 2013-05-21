@@ -21,49 +21,48 @@ match    = 5
 
 
 def Prep_Score_Hash(mismatch=-4, indel=-8, match=5):
-  Score = {}
-  #store all possible mismatch and indel scores into Score Hash table
-  for pair in permutations(['A', 'C', 'G', 'T', '-'], 2):
-    if pair[0] == '-' or pair[1] == '-':
-      Score[pair] = indel
-    else:
-      Score[pair] = mismatch
-  # store the identical ones
-  # note the special case here ('-', '-') will not receive any score here
-  Score[('-', '-')] = 0
+  ScoreTwoChar = {}
+  #store all possible mismatch and indel scores into ScoreTwoChar Hash table
+  alphabet = ['A', 'C', 'G', 'T', '-']
+  for a in alphabet:
+    for b in alphabet:
+      if a == b :
+        if not a == '-':
+          ScoreTwoChar[(a, b)] = match
+        else:
+          ScoreTwoChar[(a, b)] = 0
+      else:
+        if a == '-' or b == '-':
+          ScoreTwoChar[(a, b)] = indel
+        else:
+          ScoreTwoChar[(a, b)] = mismatch
+  ScoreThreeChar = {}
+  for a in alphabet:
+    for b in alphabet:
+      for c in alphabet:
+        if a == b and b == c and c == '-':
+          continue
+        else:
+          ScoreThreeChar[(a, b, c)] = sum([ ScoreTwoChar[i] for i in combinations([a, b, c], 2)])
+  return ScoreThreeChar
 
-  alphabet = ['A', 'C', 'G', 'T']
-  for char in alphabet:
-    Score[tuple(repeat(char, 2))] = match
+score = Prep_Score_Hash()
 
-  return Score
-
-Score = Prep_Score_Hash()
-
-def score(charA, charB, charC):
-  """
-  given three characters from the alphabet {A, C, G, T, -}, 
-  return the score for this column
-  """
-  global Score
-  return sum([ Score[pair] for pair in combinations([charA, charB, charC], 2)])
-
+def printScoreMatrix():
+  Score = Prep_Score_Hash()
+  for k, v in sorted(Score.items(), key=lambda x: x[0]):
+    print "%r => %r " % (k, v)
 
 def scoreTwoSeq(x, y):
-  """This function returns a 2D score matrix
+  """This function returns a 2D score matrix.
+  even though the name of function says this is a two sequence scoring function
+  actually in this function  the score is caluclated as if calculating three sequences
   """
-  global mismatch, indel, match
-  # M records is the score array
-  # Path stores the path information, inside of Path:
-  # d denotes: diagnal
-  # u denotes: up
-  # l denotes: left
+  global score
 
-  #even though the name of function says this is a two sequence scoring function
-  #actually in this function  the score is caluclated as if calculating three sequences
-  new_indel = score('A', '-', '-')
-  new_match = score('A', 'A', '-')
-  new_mismatch = score('A', 'C', '-')
+  new_indel = score[('A', '-', '-')]
+  new_match = score[('A', 'A', '-')]
+  new_mismatch = score[('A', 'C', '-')]
 
   M = np.zeros((len(x) + 1, len(y) + 1))
   Path = np.empty((len(x) + 1, len(y) + 1), dtype=object)
@@ -92,33 +91,31 @@ def scoreTwoSeq(x, y):
           Path[i][j] = (i-1, j)
         else:
           Path[i][j] = (i, j-1)
-
-  row = []
-  column= []
-  middle = []
-  i = len(x)
-  j = len(y)
-  while Path[i][j]:
-    try:
-      new_i, new_j = Path[i][j]
-    except: pdb.set_trace()
-    if i - new_i > 0 and j - new_j > 0 :
-      column.insert(0, x[i-1])
-      row.insert(0, y[j-1])
-      if x[i-1] == y[j-1]:
-        middle.insert(0, '|')
-      else:
-        middle.insert(0, ':') 
-    elif j - new_j > 0:
-      row.insert(0, y[j-1])
-      column.insert(0, '-')
-      middle.insert(0, 'x') 
-    elif i - new_i > 0:
-      column.insert(0, x[i-1])
-      row.insert(0, '-')
-      middle.insert(0, 'x') 
-    i = new_i
-    j = new_j
+# backtracing
+#  row = []
+#  column= []
+#  middle = []
+#  i = len(x)
+#  j = len(y)
+#  while Path[i][j]:
+#    new_i, new_j = Path[i][j]
+#    if i - new_i > 0 and j - new_j > 0 :
+#      column.insert(0, x[i-1])
+#      row.insert(0, y[j-1])
+#      if x[i-1] == y[j-1]:
+#        middle.insert(0, '|')
+#      else:
+#        middle.insert(0, ':') 
+#    elif j - new_j > 0:
+#      row.insert(0, y[j-1])
+#      column.insert(0, '-')
+#      middle.insert(0, 'x') 
+#    elif i - new_i > 0:
+#      column.insert(0, x[i-1])
+#      row.insert(0, '-')
+#      middle.insert(0, 'x') 
+#    i = new_i
+#    j = new_j
 
 #  return row, column, middle
   return M, Path
@@ -128,45 +125,42 @@ def scoreThreeSeq(A, B, C):
   This function returns the last surface of the alignment 
   between three sequences.
   """
-  global mismatch, indel, match, Score
-  new_indel = score('A', '-', '-')
+  global score
+  new_indel = score[('A', '-', '-')]
   prev, Path = scoreTwoSeq(B, C)
   
 #  pdb.set_trace()
   new = np.zeros((len(B) + 1, len(C) + 1)) 
   
   for a in range(1, len(A) + 1):
-    try:
-      new[0, 0] += indel
-    except:
-      pdb.set_trace()
+    new[0, 0] += new_indel
 
   # fill in the dumpy row when B == 0
     for c in range(1, len(C) + 1):
       new[0, c] = max(new[0, c-1] + new_indel, prev[0, c] + new_indel, 
-          prev[0, c-1] + score(A[a-1], C[c-1], '-'))
+          prev[0, c-1] + score[(A[a-1], C[c-1], '-')])
   # fill in the dumpy row when C == 0
     for b in range(1, len(B) + 1):
       new[b, 0] = max(new[b-1, 0] + new_indel, prev[b, 0] + new_indel, 
-          prev[b-1, 0] + score(A[a-1], B[b-1], '-'))
+          prev[b-1, 0] + score[(A[a-1], B[b-1], '-')])
      
     for b in range(1, len(B) + 1):
       for c in range(1, len(C) + 1):
         #1-3 edges, 4-6 diagnoal edges, 7, cube diagnoal edge
-        seven = prev[b-1, c-1] + score(A[a-1], B[b-1], C[c-1])
-        six   = prev[b-1, c] + score(A[a-1], B[b-1], '-')
-        five  = prev[b, c-1] + score(A[a-1], '-', C[c-1])
-        three = prev[b, c] + score(A[a-1], '-', '-')
-        four  = new[b-1, c-1] + score('-', B[b-1], C[c-1])
-        two   = new[b-1, c] + score('-', B[b-1], '-')
-        one   = new[b, c-1] + score('-', '-', C[c-1])
+        seven = prev[b-1, c-1] + score[(A[a-1], B[b-1], C[c-1])]
+        six   = prev[b-1, c] + score[(A[a-1], B[b-1], '-')]
+        five  = prev[b, c-1] + score[(A[a-1], '-', C[c-1])]
+        three = prev[b, c] + score[(A[a-1], '-', '-')]
+        four  = new[b-1, c-1] + score[('-', B[b-1], C[c-1])]
+        two   = new[b-1, c] + score[('-', B[b-1], '-')]
+        one   = new[b, c-1] + score[('-', '-', C[c-1])]
         new[b, c] =  max([one, two, three, four, five, six, seven])
     prev = copy.deepcopy(new)
   return new
 
 
 def alignThreeSeq(A, B, C):
-  global mismatch, indel, match
+  global score
 
   M = np.zeros((len(A) + 1, len(B) + 1, len(C) + 1))
 #  np.ndarray.fill(M[0, :, :] , -100)
@@ -192,19 +186,17 @@ def alignThreeSeq(A, B, C):
     for b in range(1, len(B) + 1):
       for c in range(1, len(C) + 1):
 #        if a == 1 and b == 1 and c == 1: continue
-        seven = M[a-1, b-1, c-1] + score(A[a-1], B[b-1], C[c-1]) 
-        six   = M[a-1, b-1, c] + score(A[a-1], B[b-1], '-')
-        five  = M[a-1, b, c-1] + score(A[a-1], '-', C[c-1])
-        three = M[a-1, b, c] + score(A[a-1], '-', '-')
-        four  = M[a, b-1, c-1] + score('-', B[b-1], C[c-1])
-        two   = M[a, b-1, c] + score('-', B[b-1], '-')
-        one   = M[a, b, c-1] + score('-', '-', C[c-1])
+        seven = M[a-1, b-1, c-1] + score[(A[a-1], B[b-1], C[c-1])]
+        six   = M[a-1, b-1, c] + score[(A[a-1], B[b-1], '-')]
+        five  = M[a-1, b, c-1] + score[(A[a-1], '-', C[c-1])]
+        three = M[a-1, b, c] + score[(A[a-1], '-', '-')]
+        four  = M[a, b-1, c-1] + score[('-', B[b-1], C[c-1])]
+        two   = M[a, b-1, c] + score[('-', B[b-1], '-')]
+        one   = M[a, b, c-1] + score[('-', '-', C[c-1])]
         M[a, b, c] =  max([one, two, three, four, five, six, seven])
 
         if M[a, b, c] == seven:
           P[a, b, c] = (a-1, b-1, c-1)
-#          if not trace_alignment:
-#            num_exact_equal += 1 if A[a-1] == B[b-1] and B[b-1] == C[c-1] else 0
         elif M[a, b, c] == six:
           P[a, b, c] = (a-1, b-1, c)
         elif M[a, b, c] == four:
@@ -287,7 +279,7 @@ def testScoreTwoSeq():
     print d
 
 def testAlignThreeSeq():
-  for x, y, z in zip( ( 'GC', 'GC', 'C'), ('C', 'GC', 'GC' )):
+  for x, y, z in zip( ( 'GC', 'GC', 'C'), ('C', 'GC', 'GC' ), ('C', 'GC', 'GC' )):
     u, m, d, s = alignThreeSeq(x, y, z)
     print "score: %r" % s
     print u
@@ -305,16 +297,6 @@ def test_recursive_call():
   Bs = ['AGC' , 'CG' , 'CG' , 'CG']
   Cs = ['AC'  , 'TG' , 'TC' , 'TC']
 
-
-#  for i, (A, B, C) in enumerate(zip(As, Bs, Cs)):
-#    u, m, d, s = alignThreeSeq(A, B, C)
-#    print "#" * 8, "alignment %r" % i, '#' * 8
-#    print "score: %r" % s
-#    print u
-#    print m
-#    print d
-#
-
   for i, (A, B, C) in enumerate(zip(As, Bs, Cs)):
     u, m, d, s = recursive_call(A, B, C)
     print "#" * 8, "alignment %r" % i, '#' * 8
@@ -322,10 +304,6 @@ def test_recursive_call():
     print u
     print m
     print d
-
-def printScorePair():
-  for i in [('T', '-', '-'), ('A', 'C', 'T'), ('C', 'C', 'G'), ('G', 'G', '-')]:
-    print "score%r = %r" % (i, score(i[0], i[1], i[2]))
 
 def write_align(stream, u, m, d, match_str, width=80):
   """
@@ -368,24 +346,20 @@ if __name__ == '__main__':
   parser.add_argument("--outputAlign", 
       help="logical if given alignment be write to file [Default: False]", action= 'store_true' )
   args = parser.parse_args()
-
-  Score = Prep_Score_Hash()
-
-
-  for k, v in sorted(Score.items(), key=lambda x: x[0]):
-    print "%r => %r " % (k, v)
-
-#  testScoreTwoSeq()
-  if not len(args.file) % 3 == 0:
-    print "Error! number of input files have to be multiples of three"
-#    pdb.set_trace()
-    sys.exit(1)
-    
-  getJobDone(args.file[0], args.file[1], args.file[2])
-#  for i in range(0, len(args.file), 3):
-##    A = get_seq(args.file[i])
-##    B = get_seq(args.file[i + 1])
-##    C = get_seq(args.file[i + 2])  
-#    p = multiprocessing.Process(target=getJobDone, args=(args.file[i], args.file[i+1], args.file[i+2]))
-#    p.start()
-
+  printScoreMatrix()
+#  testAlignThreeSeq()
+  
+##  testScoreTwoSeq()
+#  if not len(args.file) % 3 == 0:
+#    print "Error! number of input files have to be multiples of three"
+##    pdb.set_trace()
+#    sys.exit(1)
+#    
+#  getJobDone(args.file[0], args.file[1], args.file[2])
+##  for i in range(0, len(args.file), 3):
+###    A = get_seq(args.file[i])
+###    B = get_seq(args.file[i + 1])
+###    C = get_seq(args.file[i + 2])  
+##    p = multiprocessing.Process(target=getJobDone, args=(args.file[i], args.file[i+1], args.file[i+2]))
+##    p.start()
+#
