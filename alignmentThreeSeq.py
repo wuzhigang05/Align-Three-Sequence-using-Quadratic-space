@@ -349,17 +349,17 @@ if __name__ == '__main__':
   printScoreMatrix()
 #  testAlignThreeSeq()
   
-##  testScoreTwoSeq()
-#  if not len(args.file) % 3 == 0:
-#    print "Error! number of input files have to be multiples of three"
-##    pdb.set_trace()
-#    sys.exit(1)
-#    
-#  getJobDone(args.file[0], args.file[1], args.file[2])
-##  for i in range(0, len(args.file), 3):
-###    A = get_seq(args.file[i])
-###    B = get_seq(args.file[i + 1])
-###    C = get_seq(args.file[i + 2])  
-##    p = multiprocessing.Process(target=getJobDone, args=(args.file[i], args.file[i+1], args.file[i+2]))
-##    p.start()
-#
+#  testScoreTwoSeq()
+  if not len(args.file) % 3 == 0:
+    print "Error! number of input files have to be multiples of three"
+#    pdb.set_trace()
+    sys.exit(1)
+    
+  getJobDone(args.file[0], args.file[1], args.file[2])
+#  for i in range(0, len(args.file), 3):
+##    A = get_seq(args.file[i])
+##    B = get_seq(args.file[i + 1])
+##    C = get_seq(args.file[i + 2])  
+#    p = multiprocessing.Process(target=getJobDone, args=(args.file[i], args.file[i+1], args.file[i+2]))
+#    p.start()
+
