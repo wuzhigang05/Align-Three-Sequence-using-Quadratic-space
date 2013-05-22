@@ -66,13 +66,14 @@ def scoreTwoSeq(x, y):
 
   M = np.zeros((len(x) + 1, len(y) + 1))
   Path = np.empty((len(x) + 1, len(y) + 1), dtype=object)
+
   for i in range(1, len(y) + 1):
     M[0][i] = i * new_indel
     Path[0][i] = (0, i-1)
   for j in range(1, len(x) + 1):
     M[j][0] = j * new_indel 
     Path[j][0] = (j-1, 0)
-  
+####################### # check initialization 
   for i in range(1, len(x) + 1):
     for j in range(1, len(y) + 1):
       if x[i-1] == y[j-1]:
@@ -133,7 +134,7 @@ def scoreThreeSeq(A, B, C):
   new = np.zeros((len(B) + 1, len(C) + 1)) 
   
   for a in range(1, len(A) + 1):
-    new[0, 0] += new_indel
+    new[0, 0] = prev[0, 0] + new_indel
 
   # fill in the dumpy row when B == 0
     for c in range(1, len(C) + 1):
