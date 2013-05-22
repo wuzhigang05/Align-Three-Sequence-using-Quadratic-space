@@ -16,12 +16,7 @@ I have an implmentation in Python, see https://github.com/wuzhigang05/Dynamic-Pr
 
 Author
 =========
-Zhigang Wu
-
-Deparment of Botany and Plant Sciences
-
-University of California Riverside
-
+Zhigang Wu (zhigang.wu@email.ucr.edu)
 
 LICENSE
 =========
