@@ -92,33 +92,6 @@ def scoreTwoSeq(x, y):
           Path[i][j] = (i-1, j)
         else:
           Path[i][j] = (i, j-1)
-# backtracing
-#  row = []
-#  column= []
-#  middle = []
-#  i = len(x)
-#  j = len(y)
-#  while Path[i][j]:
-#    new_i, new_j = Path[i][j]
-#    if i - new_i > 0 and j - new_j > 0 :
-#      column.insert(0, x[i-1])
-#      row.insert(0, y[j-1])
-#      if x[i-1] == y[j-1]:
-#        middle.insert(0, '|')
-#      else:
-#        middle.insert(0, ':') 
-#    elif j - new_j > 0:
-#      row.insert(0, y[j-1])
-#      column.insert(0, '-')
-#      middle.insert(0, 'x') 
-#    elif i - new_i > 0:
-#      column.insert(0, x[i-1])
-#      row.insert(0, '-')
-#      middle.insert(0, 'x') 
-#    i = new_i
-#    j = new_j
-
-#  return row, column, middle
   return M, Path
 
 def scoreThreeSeq(A, B, C):
@@ -130,7 +103,6 @@ def scoreThreeSeq(A, B, C):
   new_indel = score[('A', '-', '-')]
   prev, Path = scoreTwoSeq(B, C)
   
-#  pdb.set_trace()
   new = np.zeros((len(B) + 1, len(C) + 1)) 
   
   for a in range(1, len(A) + 1):
@@ -182,11 +154,9 @@ def alignThreeSeq(A, B, C):
   P[:, 0, :]= np.array([(x[0], 0, x[1]) if x else x for x in P_tmp.flatten()]).reshape(P_tmp.shape)
   M[:, :, 0 ], P_tmp = scoreTwoSeq(A, B)
   P[:, :, 0] = np.array([(x[0], x[1], 0) if x else x for x in P_tmp.flatten()]).reshape(P_tmp.shape)
-#  num_exact_equal = 0 # stores the number of postions, in which nucleotides are identical
   for a in range(1, len(A) + 1):
     for b in range(1, len(B) + 1):
       for c in range(1, len(C) + 1):
-#        if a == 1 and b == 1 and c == 1: continue
         seven = M[a-1, b-1, c-1] + score[(A[a-1], B[b-1], C[c-1])]
         six   = M[a-1, b-1, c] + score[(A[a-1], B[b-1], '-')]
         five  = M[a-1, b, c-1] + score[(A[a-1], '-', C[c-1])]
@@ -212,10 +182,8 @@ def alignThreeSeq(A, B, C):
           P[a, b, c] = (a-1, b, c)
         else:
           raise ValueError
-#  pdb.set_trace()
   #Get the alignment str
   A_aln, B_aln, C_aln = [], [], []
-#  if trace_alignment:
   a, b, c = len(A), len(B), len(C)
   while P[a, b, c]:
     new_a, new_b, new_c = P[a, b, c]
@@ -235,7 +203,6 @@ def alignThreeSeq(A, B, C):
       C_aln.insert(0, '-')
     a, b, c = new_a, new_b, new_c
   max_score = M[len(A), len(B), len(C)]
-#  return A_aln, B_aln, C_aln, max_score, num_exact_equal
   return A_aln, B_aln, C_aln, max_score
 
 def paritionBC(M_upper, M_down):
@@ -247,7 +214,6 @@ def paritionBC(M_upper, M_down):
 
 def recursive_call(A, B, C):
   if len(A) <= 1 or len(B) <= 1 or len(C) <= 1:
-#    upper, middle, down, score, num_exact_equal = alignThreeSeq(A, B, C, trace_alignment)
     upper, middle, down, score = alignThreeSeq(A, B, C)
   else:
     xmid = len(A)/2
@@ -255,8 +221,6 @@ def recursive_call(A, B, C):
     matrix_down = scoreThreeSeq(A[xmid:][::-1], B[::-1], C[::-1])
     b, c = paritionBC(matrix_upper, matrix_down)
 
-#    upper_l, middle_l, down_l, score_l, num_l = recursive_call(A[:xmid], B[:b], C[:c], trace_alignment)
-#    upper_r, middle_r, down_r, score_r, num_r = recursive_call(A[xmid:], B[b:], C[c:], trace_alignment)
     upper_l, middle_l, down_l, score_l = recursive_call(A[:xmid], B[:b], C[:c])
     upper_r, middle_r, down_r, score_r = recursive_call(A[xmid:], B[b:], C[c:])
 
@@ -264,9 +228,7 @@ def recursive_call(A, B, C):
     middle = middle_l + middle_r
     down = down_l + down_r
     score = score_l + score_r
-#    num_exact_equal = num_l + num_r
 
-#  return upper, middle, down, score, num_exact_equal
   return upper, middle, down, score
 
 def testScoreTwoSeq():
@@ -322,10 +284,7 @@ def getJobDone(fileA, fileB, fileC):
   B = get_seq(fileB)
   C = get_seq(fileC)  
   with open(out_name, 'w') as OUT:
-#      u, m, d, s, num_exact_equal = recursive_call(A, B, C, args.outputAlign)
     u, m, d, s = recursive_call(A, B, C)
-#      if args.outputAlign:
-#    pdb.set_trace()
     num_exact_equal= [1 if a == b and b == c else 0 for a, b, c in zip(u, m, d)]
     tmp_list = "".join(map(str, num_exact_equal))
     num_exact_equal = sum(num_exact_equal)
@@ -334,7 +293,6 @@ def getJobDone(fileA, fileB, fileC):
     u = "".join(u)
     m = "".join(m)
     d = "".join(d)
-#    OUT.write("#" * 8 + " alignment %r " % i + '#' * 8 + "\n")
     OUT.write("score: %r\tlength:%r\tperfect match nts: %r\n" % (s, len(u), num_exact_equal))
     write_align(OUT, u, m, d, tmp_list)
     OUT.write("Memory_usage: %r (bytes)\t Running_time: %.2f (s)\n" % (h.heap().size, time.time() - start))
@@ -342,18 +300,18 @@ def getJobDone(fileA, fileB, fileC):
 if __name__ == '__main__': 
   o = sys.stdout
   e = sys.stderr
-  parser= argparse.ArgumentParser(description="")
-  parser.add_argument("file", help="", nargs = '+')
+  parser= argparse.ArgumentParser(
+      description="Align three sequences in quadratic space. The sequences have to be in FASTA/Q format")
+  parser.add_argument("file", help="the input files, the number of files have to be triplets (3, 6, 9 ...", 
+      nargs = '+')
   parser.add_argument("--outputAlign", 
       help="logical if given alignment be write to file [Default: False]", action= 'store_true' )
   args = parser.parse_args()
   printScoreMatrix()
 #  testAlignThreeSeq()
-  
 #  testScoreTwoSeq()
   if not len(args.file) % 3 == 0:
     print "Error! number of input files have to be multiples of three"
-#    pdb.set_trace()
     sys.exit(1)
     
   getJobDone(args.file[0], args.file[1], args.file[2])
