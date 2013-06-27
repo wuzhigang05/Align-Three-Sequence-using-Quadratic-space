@@ -13,9 +13,9 @@ Requirements
 =============
   1. Python version >2.7
   
-  2. package: numpy (http://www.numpy.org/)
+  2. package: [numpy] (http://www.numpy.org/)
 
-  3. package: Biopython (http://biopython.org/wiki/Main_Page)
+  3. package: [Biopython] (http://biopython.org/wiki/Main_Page)
 
 Example Usage
 =============
