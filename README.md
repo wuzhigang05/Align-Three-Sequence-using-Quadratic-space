@@ -7,7 +7,7 @@ space requirement, alignment of three genes with a length of more than 1000 char
 almost infeasible in most of our modern computers. Here, by using a divide conque technique, 
 I implemented alignment of three sequences in quadratic space. The idea of this implementation 
 is similar to [Hirschberg\'s algorithm](http://en.wikipedia.org/wiki/Hirschberg's_algorithm), which 
-I have an implmentation in Python, see https://github.com/wuzhigang05/Dynamic-Programming-Linear-Space.git
+I have an implmentation in Python, see [here](https://github.com/wuzhigang05/Dynamic-Programming-Linear-Space.git).
 
 Requirements
 =============
